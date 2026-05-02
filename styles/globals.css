@@ -1,0 +1,105 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --navy: #0a0f1e;
+  --navy2: #111827;
+  --navy3: #1c2540;
+  --cyan: #00d4e8;
+  --border: rgba(255,255,255,0.1);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--navy);
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 10%, rgba(0,212,232,0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(0,80,180,0.10) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.mono { font-family: 'DM Mono', monospace; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--navy2); }
+::-webkit-scrollbar-thumb { background: rgba(0,212,232,0.3); border-radius: 3px; }
+
+/* Animations */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.35s ease forwards; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin 1s linear infinite; display: inline-block; }
+
+/* Glassmorphism card */
+.glass {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  backdrop-filter: blur(8px);
+}
+
+/* Select override */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(255,255,255,0.4)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px !important;
+}
+
+select option, select optgroup {
+  background: #111827;
+  color: #fff;
+}
+
+/* Input focus glow */
+input:focus, select:focus {
+  outline: none;
+  border-color: rgba(0,212,232,0.5) !important;
+  box-shadow: 0 0 0 3px rgba(0,212,232,0.08) !important;
+}
+
+/* Color swatch animation */
+.color-swatch {
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.color-swatch:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 0 3px rgba(0,212,232,0.4);
+}
+.color-swatch.active {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 3px #00d4e8;
+}
+
+/* Gallery dots */
+.gallery-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+  transition: all 0.2s;
+}
+.gallery-dot.active {
+  background: #00d4e8;
+  width: 18px;
+  border-radius: 3px;
+}
