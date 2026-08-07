@@ -5,6 +5,7 @@ import { IMAGES } from '../lib/images'
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 const IVA = 0.21
 const SEGURO = 0.0022965
+const COSTO_PRENDA = 0.015
 
 export interface CreditLine {
   id: string
@@ -244,6 +245,7 @@ function ResultCard({ model, capital, cuotas, blue, activeColor, line }: {
   const patentamientoARS = model.patentamiento_usd * tc
   const quebrantoPct = line.quebranto?.[cuotas]
   const quebrantoMonto = quebrantoPct ? capital * quebrantoPct : 0
+  const costoPrenda = capital * COSTO_PRENDA
 
   const rows = [
     { label: 'Línea de crédito', val: line.nombre },
@@ -254,6 +256,7 @@ function ResultCard({ model, capital, cuotas, blue, activeColor, line }: {
     { label: 'Plazo', val: `${cuotas} meses` },
     { label: 'Vencimiento', val: 'Día 10 de cada mes' },
     ...(quebrantoPct ? [{ label: 'Quebranto (bonif. tasa)', val: `${fp(quebrantoMonto)} (${pct(quebrantoPct)}, no incl. IVA/IIBB)` }] : []),
+    { label: 'Costo de prenda', val: `${fp(costoPrenda)} (${pct(COSTO_PRENDA)})` },
     { label: 'Total a pagar', val: tc > 0 ? `${fp(totalGeneral)} (${fu(totalGeneral / tc)})` : fp(totalGeneral) },
     { label: 'Tipo de cambio blue', val: tc > 0 ? `$ ${tc.toLocaleString('es-AR')} / USD` : 'No disponible' },
   ]
@@ -340,6 +343,7 @@ function drawBudgetCanvas(
   const patentamientoARS = model.patentamiento_usd * tc
   const quebrantoPct = line.quebranto?.[cuotas]
   const quebrantoMonto = quebrantoPct ? capital * quebrantoPct : 0
+  const costoPrenda = capital * COSTO_PRENDA
 
   // BG
   const bg = ctx.createLinearGradient(0, 0, 0, H)
@@ -466,6 +470,7 @@ function drawBudgetCanvas(
       ['TNA', pct(line.tna)],
       ['Plazo', cuotas + ' meses'],
       ...(quebrantoPct ? [['Quebranto (bonif. tasa)', fp(quebrantoMonto) + ' (' + pct(quebrantoPct) + ')']] : []),
+      ['Costo de prenda', fp(costoPrenda) + ' (' + pct(COSTO_PRENDA) + ')'],
       ['Total a pagar', fp(totalGeneral) + ' (' + fu(totalGeneral / tc) + ')'],
       ['Tipo de cambio blue', '$ ' + tc.toLocaleString('es-AR') + ' / USD'],
     ]
@@ -726,6 +731,7 @@ export default function Home() {
     const colorStr = activeColor?.name || 'A confirmar'
     const quebrantoPct = linea.quebranto?.[cuotas]
     const quebrantoLine = quebrantoPct ? `• Quebranto: *${fp(capitalNum * quebrantoPct)}* (${pct(quebrantoPct)}, no incl. IVA/IIBB)\n` : ''
+    const costoPrenda = capitalNum * COSTO_PRENDA
 
     const msg =
       `🚗 *COTIZACIÓN FORMAL BYD ARGENTINA*\n` +
@@ -739,6 +745,7 @@ export default function Home() {
       `• Capital: *${fp(capitalNum)}* (≈ ${fu(capitalNum / tc)})\n` +
       `• TNA: ${pct(linea.tna)}  |  Plazo: ${cuotas} meses\n` +
       quebrantoLine +
+      `• Costo de prenda: *${fp(costoPrenda)}* (${pct(COSTO_PRENDA)})\n` +
       `• Vencimiento de cuota: *día 10 de cada mes*\n` +
       `*Cuota ${linea.uva ? 'inicial' : 'total'}: ${fp(cuotaTotal)}*\n` +
       (linea.uva ? `_Cuota indexada por UVA: se ajusta mensualmente según el coeficiente UVA (BCRA)._\n` : '') +
