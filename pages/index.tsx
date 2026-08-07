@@ -586,12 +586,11 @@ function WAModal({ onClose, onSend }: { onClose: () => void, onSend: (phone: str
           <div className="text-xs font-semibold text-[#00d4e8] mb-2">📎 Se descarga automáticamente:</div>
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center gap-2 text-xs text-white/55">🖼️ Imagen del presupuesto (JPG)</div>
-            <div className="flex items-center gap-2 text-xs text-white/55">📄 Ficha técnica del vehículo (PDF)</div>
           </div>
         </div>
 
         <div className="rounded-xl px-3 py-2.5 mb-4 text-xs text-yellow-300/75 leading-relaxed" style={{ background: 'rgba(255,200,0,0.05)', border: '1px solid rgba(255,200,0,0.12)' }}>
-          ⚠️ Una vez que se abra WhatsApp, adjuntá la imagen y la ficha técnica descargadas.
+          ⚠️ Una vez que se abra WhatsApp, adjuntá la imagen descargada.
         </div>
 
         <button
@@ -753,20 +752,12 @@ export default function Home() {
       }, 'image/jpeg', 0.92)
     }
 
-    // 2. Download PDF
-    setTimeout(() => {
-      const a = document.createElement('a')
-      a.href = `/fichas/${model.id}.pdf`
-      a.download = `ficha-tecnica-byd-${model.id}.pdf`
-      a.click()
-    }, 500)
-
-    // 3. Open WhatsApp
+    // 2. Open WhatsApp
     setTimeout(() => {
       window.open(`https://wa.me/54${phone}?text=${encodeURIComponent(msg)}`, '_blank')
       setShowWA(false)
       setShowPreview(false)
-    }, 1100)
+    }, 600)
   }
 
   return (
