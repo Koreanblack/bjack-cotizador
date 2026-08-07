@@ -19,6 +19,7 @@ export interface Model {
   neumaticos: string;
   colores: Color[];
   defaultImg: string;
+  imagenIlustrativa?: boolean;
 }
 
 export const MODELOS: Model[] = [
@@ -178,17 +179,18 @@ export const MODELOS: Model[] = [
     tipo: 'Híbrido enchufable PHEV',
     precio_usd: 47990,
     patentamiento_usd: 1800,
-    motor: 'A confirmar',
-    autonomia: 'A confirmar',
-    aceleracion: 'A confirmar',
-    bateria: 'A confirmar',
+    motor: '',
+    autonomia: '',
+    aceleracion: '',
+    bateria: '',
     asientos: '5 asientos',
-    medidas: 'A confirmar',
-    neumaticos: 'A confirmar',
+    medidas: '',
+    neumaticos: '',
     colores: [
       { name: 'Aurora Gray', hex: '#b0b0b4', imgKey: 'seal_u_gray' },
     ],
     defaultImg: 'seal_u_gray',
+    imagenIlustrativa: true,
   },
   {
     id: 'shark',

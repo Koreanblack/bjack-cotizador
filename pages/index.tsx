@@ -163,6 +163,13 @@ function ImageGallery({ model, activeColor, onColorChange }: {
           <div className="text-[#00d4e8] text-xs mt-0.5">{model.tipo}</div>
         </div>
 
+        {/* Illustrative image badge */}
+        {model.imagenIlustrativa && (
+          <div className="absolute top-2 right-2 text-[10px] text-white/70 bg-black/40 rounded-full px-2.5 py-1">
+            Imagen ilustrativa
+          </div>
+        )}
+
         {/* Nav arrows */}
         {gallery.length > 1 && (
           <>
@@ -532,6 +539,15 @@ function drawBudgetCanvas(
       const ov = ctx.createLinearGradient(0, y, 0, y + imgH)
       ov.addColorStop(0, 'rgba(10,15,30,0.25)'); ov.addColorStop(1, 'rgba(10,15,30,0.55)')
       ctx.fillStyle = ov; ctx.fillRect(0, y, W, imgH)
+      if (model.imagenIlustrativa) {
+        ctx.font = '500 10px Arial'; ctx.textAlign = 'right'
+        const label = 'Imagen ilustrativa'
+        const padX = 10, labelW = ctx.measureText(label).width + padX * 2
+        ctx.fillStyle = 'rgba(0,0,0,0.4)'; rr(W - labelW - 12, y + 10, labelW, 22, 11); ctx.fill()
+        ctx.fillStyle = 'rgba(255,255,255,0.75)'
+        ctx.fillText(label, W - 12 - padX, y + 25)
+        ctx.textAlign = 'left'
+      }
       y = finalY; drawRest()
     }
     img.onerror = () => { y = finalY; drawRest() }
