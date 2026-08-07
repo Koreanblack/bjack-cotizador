@@ -611,14 +611,18 @@ function WAModal({ onClose, onSend }: { onClose: () => void, onSend: (phone: str
 }
 
 // ─── CANVAS PREVIEW MODAL ─────────────────────────────────────────────────────
-function PreviewModal({ canvasRef, onClose, onDownload, onWA }: {
+function PreviewModal({ visible, canvasRef, onClose, onDownload, onWA }: {
+  visible: boolean,
   canvasRef: React.RefObject<HTMLCanvasElement>,
   onClose: () => void,
   onDownload: () => void,
   onWA: () => void
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto" style={{ background: 'rgba(0,0,0,0.85)' }}>
+    <div
+      className="fixed inset-0 z-50 items-center justify-center p-4 overflow-y-auto"
+      style={{ background: 'rgba(0,0,0,0.85)', display: visible ? 'flex' : 'none' }}
+    >
       <div className="w-full max-w-lg rounded-2xl p-5 my-4" style={{ background: '#1a1a2e', border: '1px solid rgba(0,212,232,0.2)' }}>
         <div className="flex items-center justify-between mb-4">
           <span className="font-semibold text-white text-base">Vista previa del presupuesto</span>
@@ -883,19 +887,15 @@ export default function Home() {
         Sujeto a aprobación crediticia
       </div>
 
-      {/* Hidden canvas */}
-      <canvas ref={canvasRef} className="hidden" />
-
       {/* Modals */}
       {showWA && <WAModal onClose={() => setShowWA(false)} onSend={doSendWA} />}
-      {showPreview && (
-        <PreviewModal
-          canvasRef={canvasRef}
-          onClose={() => setShowPreview(false)}
-          onDownload={downloadImg}
-          onWA={() => { setShowPreview(false); setShowWA(true) }}
-        />
-      )}
+      <PreviewModal
+        visible={showPreview}
+        canvasRef={canvasRef}
+        onClose={() => setShowPreview(false)}
+        onDownload={downloadImg}
+        onWA={() => { setShowPreview(false); setShowWA(true) }}
+      />
     </div>
   )
 }
