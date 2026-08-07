@@ -15,12 +15,13 @@ export interface CreditLine {
   quebranto?: Record<number, number>
 }
 
-// Fuente: Santander Consumer · Tasas BYD · Agosto 2026
+// Fuente: Santander Consumer · Tasas BYD · 7 de Agosto 2026
 const CREDIT_LINES: CreditLine[] = [
-  { id: 'tradicional', nombre: 'Línea Tradicional BYD', tna: 0.359, uva: false, plazos: [12, 18, 24, 36, 48, 60] },
-  { id: 'uva', nombre: 'Línea UVA BYD', tna: 0.129, uva: true, plazos: [12, 18, 24, 36, 48, 60] },
-  { id: 'uva0', nombre: 'Promo UVA 0%', tna: 0, uva: true, plazos: [12, 18, 24], quebranto: { 12: 0.062, 18: 0.089, 24: 0.115 } },
-  { id: 'uva990', nombre: 'Promo UVA 9,90%', tna: 0.099, uva: true, plazos: [12, 18, 24], quebranto: { 12: 0.011, 18: 0.016, 24: 0.02 } },
+  { id: 'tradicional', nombre: 'Línea Tradicional BYD', tna: 0.329, uva: false, plazos: [12, 18, 24, 36, 48, 60] },
+  { id: 'uva', nombre: 'Línea UVA BYD', tna: 0.125, uva: true, plazos: [12, 18, 24, 36, 48] },
+  { id: 'fija0', nombre: 'Promo Fija 0%', tna: 0, uva: false, plazos: [12, 18, 24, 36, 48], quebranto: { 12: 0.158, 18: 0.219, 24: 0.275, 36: 0.37, 48: 0.448 } },
+  { id: 'uva0', nombre: 'Promo UVA 0%', tna: 0, uva: true, plazos: [12, 18, 24, 36, 48], quebranto: { 12: 0.065, 18: 0.093, 24: 0.12, 36: 0.17, 48: 0.216 } },
+  { id: 'uva990', nombre: 'Promo UVA 9,90%', tna: 0.099, uva: true, plazos: [12, 18, 24, 36, 48], quebranto: { 12: 0.014, 18: 0.02, 24: 0.026, 36: 0.037, 48: 0.048 } },
 ]
 
 function pct(n: number) { return (n * 100).toFixed(2).replace('.', ',') + '%' }
