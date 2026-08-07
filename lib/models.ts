@@ -83,7 +83,7 @@ export const MODELOS: Model[] = [
       { name: 'Time Gray', hex: '#7a8a96', imgKey: null },
       { name: 'Malachite Darkcyan', hex: '#1a7a6a', imgKey: null },
     ],
-    defaultImg: 'yuan_white',
+    defaultImg: 'yuan_black',
   },
   {
     id: 'yuan',
@@ -104,7 +104,7 @@ export const MODELOS: Model[] = [
       { name: 'Time Gray', hex: '#7a8a96', imgKey: null },
       { name: 'Malachite Darkcyan', hex: '#1a7a6a', imgKey: null },
     ],
-    defaultImg: 'yuan_white',
+    defaultImg: 'yuan_black',
   },
   {
     id: 'atto2',
@@ -148,7 +148,7 @@ export const MODELOS: Model[] = [
       { name: 'Obsidian Black', hex: '#1a1a1a', imgKey: 'song_black' },
       { name: 'Cream Brown', hex: '#c8a878', imgKey: null },
     ],
-    defaultImg: 'song_white',
+    defaultImg: 'song_blue',
   },
   {
     id: 'song',
@@ -170,7 +170,7 @@ export const MODELOS: Model[] = [
       { name: 'Obsidian Black', hex: '#1a1a1a', imgKey: 'song_black' },
       { name: 'Cream Brown', hex: '#c8a878', imgKey: null },
     ],
-    defaultImg: 'song_white',
+    defaultImg: 'song_blue',
   },
   {
     id: 'seal_u',
@@ -186,9 +186,9 @@ export const MODELOS: Model[] = [
     medidas: 'A confirmar',
     neumaticos: 'A confirmar',
     colores: [
-      { name: 'A confirmar', hex: '#9aa0a8', imgKey: null },
+      { name: 'Aurora Gray', hex: '#b0b0b4', imgKey: 'seal_u_gray' },
     ],
-    defaultImg: 'seal_u_white',
+    defaultImg: 'seal_u_gray',
   },
   {
     id: 'shark',
@@ -208,8 +208,8 @@ export const MODELOS: Model[] = [
       { name: 'Urdu Milky-Gray', hex: '#9aaa8a', imgKey: 'shark_urdu' },
       { name: 'Atlantis Gray', hex: '#6a7a88', imgKey: 'shark_gray' },
       { name: 'Floating Sun Orange', hex: '#e86820', imgKey: null },
-      { name: 'Obsidian Black', hex: '#1a1a1a', imgKey: null },
+      { name: 'Obsidian Black', hex: '#1a1a1a', imgKey: 'shark_black' },
     ],
-    defaultImg: 'shark_white',
+    defaultImg: 'shark_black',
   },
 ];
