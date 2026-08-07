@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { MODELOS, Color, Model } from '../lib/models'
 import { IMAGES } from '../lib/images'
 
@@ -34,24 +34,25 @@ function calcBase(capital: number, n: number, tna: number) {
 
 // ─── COMPONENTS ──────────────────────────────────────────────────────────────
 
-function BlueBar({ blue, onRefresh, loading }: { blue: number | null, onRefresh: () => void, loading: boolean }) {
+function BlueBar({ value, onChange }: { value: string, onChange: (v: string) => void }) {
   return (
     <div className="relative flex items-center gap-3 glass rounded-xl px-4 py-3 mb-5 overflow-hidden">
       <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl" style={{ background: 'linear-gradient(to bottom, #00d4e8, #00b4c8)' }} />
       <div className="flex-1 min-w-0">
         <div className="text-xs text-white/60">💵 Dólar Blue — Venta</div>
-        <div className="text-[11px] text-white/30 mt-0.5" id="blue-time">{loading ? 'actualizando...' : blue ? `TC del día` : 'No disponible'}</div>
+        <div className="text-[11px] text-white/30 mt-0.5">Carga manual</div>
       </div>
-      <div className="font-mono text-lg font-medium text-[#00d4e8]">
-        {blue ? `$ ${blue.toLocaleString('es-AR')}` : '—'}
+      <div className="flex items-center gap-1">
+        <span className="text-white/30 font-mono text-sm">$</span>
+        <input
+          type="number"
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          placeholder="0"
+          inputMode="numeric"
+          className="w-24 h-9 px-2 text-right text-lg font-mono bg-[#1c2540] text-[#00d4e8] border border-white/10 rounded-lg"
+        />
       </div>
-      <button
-        onClick={onRefresh}
-        disabled={loading}
-        className="text-[11px] text-white/50 bg-white/5 border border-white/10 rounded-md px-3 py-1.5 hover:text-white hover:bg-white/10 transition-all whitespace-nowrap"
-      >
-        {loading ? <span className="spin">↻</span> : '↻ Actualizar'}
-      </button>
     </div>
   )
 }
@@ -662,8 +663,7 @@ function PreviewModal({ visible, canvasRef, onClose, onDownload, onWA }: {
 
 // ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 export default function Home() {
-  const [blue, setBlue] = useState<number | null>(null)
-  const [blueLoading, setBlueLoading] = useState(false)
+  const [blueInput, setBlueInput] = useState('')
   const [model, setModel] = useState<Model | null>(null)
   const [activeColor, setActiveColor] = useState<Color | null>(null)
   const [linea, setLinea] = useState<CreditLine>(CREDIT_LINES[0])
@@ -673,17 +673,8 @@ export default function Home() {
   const [showPreview, setShowPreview] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
-  const fetchBlue = useCallback(async () => {
-    setBlueLoading(true)
-    try {
-      const r = await fetch('https://dolarapi.com/v1/dolares/blue')
-      const d = await r.json()
-      setBlue(d.venta)
-    } catch { setBlue(null) }
-    setBlueLoading(false)
-  }, [])
-
-  useEffect(() => { fetchBlue() }, [fetchBlue])
+  const blueNum = parseFloat(blueInput.replace(/\./g, '').replace(',', '.'))
+  const blue = blueNum > 0 ? blueNum : null
 
   const onModelChange = (m: Model) => {
     setModel(m)
@@ -788,12 +779,12 @@ export default function Home() {
         </div>
         <div>
           <h1 className="text-xl font-semibold text-white">Cotizador de Créditos</h1>
-          <p className="text-xs text-white/50 mt-0.5">Bjack · BYD Argentina · TC blue en tiempo real</p>
+          <p className="text-xs text-white/50 mt-0.5">Bjack · BYD Argentina</p>
         </div>
       </div>
 
       {/* Blue rate */}
-      <BlueBar blue={blue} onRefresh={fetchBlue} loading={blueLoading} />
+      <BlueBar value={blueInput} onChange={setBlueInput} />
 
       {/* Chips */}
       <div className="grid grid-cols-3 gap-2 mb-5">
