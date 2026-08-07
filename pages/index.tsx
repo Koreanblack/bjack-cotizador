@@ -3,14 +3,32 @@ import { MODELOS, Color, Model } from '../lib/models'
 import { IMAGES } from '../lib/images'
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
-const TNA = 0.389
 const IVA = 0.21
 const SEGURO = 0.0022965
 
+export interface CreditLine {
+  id: string
+  nombre: string
+  tna: number
+  uva: boolean
+  plazos: number[]
+  quebranto?: Record<number, number>
+}
+
+// Fuente: Santander Consumer · Tasas BYD · Agosto 2026
+const CREDIT_LINES: CreditLine[] = [
+  { id: 'tradicional', nombre: 'Línea Tradicional BYD', tna: 0.359, uva: false, plazos: [12, 18, 24, 36, 48, 60] },
+  { id: 'uva', nombre: 'Línea UVA BYD', tna: 0.129, uva: true, plazos: [12, 18, 24, 36, 48, 60] },
+  { id: 'uva0', nombre: 'Promo UVA 0%', tna: 0, uva: true, plazos: [12, 18, 24], quebranto: { 12: 0.062, 18: 0.089, 24: 0.115 } },
+  { id: 'uva990', nombre: 'Promo UVA 9,90%', tna: 0.099, uva: true, plazos: [12, 18, 24], quebranto: { 12: 0.011, 18: 0.016, 24: 0.02 } },
+]
+
+function pct(n: number) { return (n * 100).toFixed(2).replace('.', ',') + '%' }
 function fp(n: number) { return '$ ' + Math.round(n).toLocaleString('es-AR') }
 function fu(n: number) { return 'USD ' + Math.round(n).toLocaleString('es-AR') }
-function calcBase(capital: number, n: number) {
-  const tmm = TNA / 12
+function calcBase(capital: number, n: number, tna: number) {
+  const tmm = tna / 12
+  if (tmm === 0) return capital / n
   return capital * (tmm * Math.pow(1 + tmm, n)) / (Math.pow(1 + tmm, n) - 1)
 }
 
@@ -62,6 +80,32 @@ function ModelSelector({ selected, onChange }: { selected: Model | null, onChang
           ))}
         </optgroup>
       </select>
+    </div>
+  )
+}
+
+function LineaSelector({ selected, onChange }: { selected: CreditLine, onChange: (l: CreditLine) => void }) {
+  return (
+    <div className="mb-4">
+      <label className="block text-xs text-white/60 mb-1.5">Línea de crédito</label>
+      <div className="grid grid-cols-2 gap-2">
+        {CREDIT_LINES.map(l => (
+          <button
+            key={l.id}
+            onClick={() => onChange(l)}
+            className={`text-left px-3 py-2.5 rounded-xl border transition-all ${
+              selected.id === l.id
+                ? 'bg-[rgba(0,212,232,0.15)] border-[rgba(0,212,232,0.5)]'
+                : 'bg-white/5 border-white/10 hover:border-[rgba(0,212,232,0.3)]'
+            }`}
+          >
+            <div className={`text-[12px] font-semibold ${selected.id === l.id ? 'text-[#00d4e8]' : 'text-white/80'}`}>{l.nombre}</div>
+            <div className="text-[10px] text-white/40 mt-0.5 font-mono">
+              TNA {pct(l.tna)}{l.uva ? ' · UVA' : ''}{l.quebranto ? ' · c/ quebranto' : ''}
+            </div>
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
@@ -154,12 +198,11 @@ function ImageGallery({ model, activeColor, onColorChange }: {
   )
 }
 
-function CuotasGrid({ selected, onChange }: { selected: number, onChange: (n: number) => void }) {
-  const opts = [6, 12, 18, 24, 36, 48, 60]
+function CuotasGrid({ selected, onChange, opts }: { selected: number, onChange: (n: number) => void, opts: number[] }) {
   return (
     <div>
       <label className="block text-[11px] font-semibold text-white/30 uppercase tracking-widest mb-2">Cantidad de cuotas</label>
-      <div className="grid grid-cols-7 gap-1.5 mb-5">
+      <div className="grid gap-1.5 mb-5" style={{ gridTemplateColumns: `repeat(${opts.length}, minmax(0, 1fr))` }}>
         {opts.map(n => (
           <button
             key={n}
@@ -178,11 +221,11 @@ function CuotasGrid({ selected, onChange }: { selected: number, onChange: (n: nu
   )
 }
 
-function ResultCard({ model, capital, cuotas, blue, activeColor }: {
-  model: Model, capital: number, cuotas: number, blue: number | null, activeColor: Color | null
+function ResultCard({ model, capital, cuotas, blue, activeColor, line }: {
+  model: Model, capital: number, cuotas: number, blue: number | null, activeColor: Color | null, line: CreditLine
 }) {
   const tc = blue || 0
-  const cuotaBase = calcBase(capital, cuotas)
+  const cuotaBase = calcBase(capital, cuotas, line.tna)
   const interesTotal = cuotaBase * cuotas - capital
   const ivaXCuota = (interesTotal * IVA) / cuotas
   const seguroXCuota = capital * SEGURO
@@ -190,13 +233,28 @@ function ResultCard({ model, capital, cuotas, blue, activeColor }: {
   const totalGeneral = cuotaTotal * cuotas
   const precioARS = model.precio_usd * tc
   const patentamientoARS = model.patentamiento_usd * tc
+  const quebrantoPct = line.quebranto?.[cuotas]
+  const quebrantoMonto = quebrantoPct ? capital * quebrantoPct : 0
+
+  const rows = [
+    { label: 'Línea de crédito', val: line.nombre },
+    { label: 'Vehículo', val: tc > 0 ? `${fp(precioARS)} (${fu(model.precio_usd)})` : fu(model.precio_usd) },
+    { label: 'Patentamiento', val: tc > 0 ? `${fp(patentamientoARS)} (${fu(model.patentamiento_usd)})` : fu(model.patentamiento_usd) },
+    { label: 'Capital financiado', val: tc > 0 ? `${fp(capital)} (${fu(capital / tc)})` : fp(capital) },
+    { label: 'TNA', val: pct(line.tna) },
+    { label: 'Plazo', val: `${cuotas} meses` },
+    { label: 'Vencimiento', val: 'Día 10 de cada mes' },
+    ...(quebrantoPct ? [{ label: 'Quebranto (bonif. tasa)', val: `${fp(quebrantoMonto)} (${pct(quebrantoPct)}, no incl. IVA/IIBB)` }] : []),
+    { label: 'Total a pagar', val: tc > 0 ? `${fp(totalGeneral)} (${fu(totalGeneral / tc)})` : fp(totalGeneral) },
+    { label: 'Tipo de cambio blue', val: tc > 0 ? `$ ${tc.toLocaleString('es-AR')} / USD` : 'No disponible' },
+  ]
 
   return (
     <div className="fade-up">
       {/* Main cuota */}
       <div className="relative rounded-2xl p-5 mb-3 overflow-hidden" style={{ background: 'linear-gradient(135deg, #0e1f3d, #0a1628)', border: '1px solid rgba(0,212,232,0.2)' }}>
         <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(to right, transparent, rgba(0,212,232,0.4), transparent)' }} />
-        <div className="text-[10px] uppercase tracking-widest text-white/35 mb-1.5">Cuota mensual total</div>
+        <div className="text-[10px] uppercase tracking-widest text-white/35 mb-1.5">{line.uva ? 'Cuota mensual inicial' : 'Cuota mensual total'}</div>
         <div className="font-mono text-4xl font-bold text-[#00d4e8] tracking-tight">{fp(cuotaTotal)}</div>
         {tc > 0 && <div className="font-mono text-xs text-white/30 mt-1.5">≈ {fu(cuotaTotal / tc)}</div>}
 
@@ -215,29 +273,28 @@ function ResultCard({ model, capital, cuotas, blue, activeColor }: {
         </div>
 
         <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between">
-          <span className="text-[11px] text-white/30">{cuotas} cuotas · TNA 38,9%</span>
+          <span className="text-[11px] text-white/30">{cuotas} cuotas · TNA {pct(line.tna)}</span>
           <span className="text-[11px] text-[#00d4e8] bg-[rgba(0,212,232,0.08)] border border-[rgba(0,212,232,0.2)] rounded-full px-2.5 py-0.5 font-mono">IVA + Seguro incl.</span>
         </div>
       </div>
 
       {/* Detail rows */}
       <div className="rounded-xl overflow-hidden mb-3" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-        {[
-          { label: 'Vehículo', val: tc > 0 ? `${fp(precioARS)} (${fu(model.precio_usd)})` : fu(model.precio_usd) },
-          { label: 'Patentamiento', val: tc > 0 ? `${fp(patentamientoARS)} (${fu(model.patentamiento_usd)})` : fu(model.patentamiento_usd) },
-          { label: 'Capital financiado', val: tc > 0 ? `${fp(capital)} (${fu(capital / tc)})` : fp(capital) },
-          { label: 'TNA / TEA / CFTEA', val: '38,9% / 46,64% / 58,68%' },
-          { label: 'Plazo', val: `${cuotas} meses` },
-          { label: 'Vencimiento', val: 'Día 10 de cada mes' },
-          { label: 'Total a pagar', val: tc > 0 ? `${fp(totalGeneral)} (${fu(totalGeneral / tc)})` : fp(totalGeneral) },
-          { label: 'Tipo de cambio blue', val: tc > 0 ? `$ ${tc.toLocaleString('es-AR')} / USD` : 'No disponible' },
-        ].map((row, i) => (
-          <div key={i} className={`flex items-center justify-between px-4 py-2.5 ${i < 7 ? 'border-b border-white/5' : ''}`}>
+        {rows.map((row, i) => (
+          <div key={i} className={`flex items-center justify-between px-4 py-2.5 ${i < rows.length - 1 ? 'border-b border-white/5' : ''}`}>
             <span className="text-xs text-white/40">{row.label}</span>
             <span className="font-mono text-xs text-white/85 text-right max-w-[55%]">{row.val}</span>
           </div>
         ))}
       </div>
+
+      {/* UVA note */}
+      {line.uva && (
+        <div className="rounded-xl px-4 py-3 mb-3 text-xs" style={{ background: 'rgba(0,212,232,0.05)', border: '1px solid rgba(0,212,232,0.15)' }}>
+          <span className="text-[#00d4e8] font-semibold">ℹ️ Línea indexada por UVA.</span>
+          <span className="text-white/40 ml-1">La cuota se ajusta mensualmente según la evolución del coeficiente UVA (BCRA). El valor mostrado es la cuota inicial.</span>
+        </div>
+      )}
 
       {/* Warning */}
       <div className="rounded-xl px-4 py-3 mb-3 text-xs" style={{ background: 'rgba(255,180,0,0.06)', border: '1px solid rgba(255,180,0,0.15)' }}>
@@ -256,14 +313,15 @@ function drawBudgetCanvas(
   cuotas: number,
   blue: number,
   activeColor: Color | null,
-  imgKey: string | null
+  imgKey: string | null,
+  line: CreditLine
 ) {
   const W = 480, H = 940
   canvas.width = W; canvas.height = H
   const ctx = canvas.getContext('2d')!
 
   const tc = blue || 1
-  const cuotaBase = calcBase(capital, cuotas)
+  const cuotaBase = calcBase(capital, cuotas, line.tna)
   const interesTotal = cuotaBase * cuotas - capital
   const ivaXCuota = (interesTotal * IVA) / cuotas
   const seguroXCuota = capital * SEGURO
@@ -271,6 +329,8 @@ function drawBudgetCanvas(
   const totalGeneral = cuotaTotal * cuotas
   const precioARS = model.precio_usd * tc
   const patentamientoARS = model.patentamiento_usd * tc
+  const quebrantoPct = line.quebranto?.[cuotas]
+  const quebrantoMonto = quebrantoPct ? capital * quebrantoPct : 0
 
   // BG
   const bg = ctx.createLinearGradient(0, 0, 0, H)
@@ -354,7 +414,7 @@ function drawBudgetCanvas(
     ctx.strokeStyle = lg; ctx.lineWidth = 1.5
     ctx.beginPath(); ctx.moveTo(0, y + 1); ctx.lineTo(W, y + 1); ctx.stroke()
     ctx.font = '500 10px Arial'; ctx.fillStyle = 'rgba(255,255,255,0.32)'; ctx.textAlign = 'left'
-    ctx.fillText('CUOTA MENSUAL TOTAL', 20, y + 21)
+    ctx.fillText(line.uva ? 'CUOTA MENSUAL INICIAL' : 'CUOTA MENSUAL TOTAL', 20, y + 21)
     ctx.font = 'bold 36px monospace'; ctx.fillStyle = '#00d4e8'
     ctx.fillText(fp(cuotaTotal), 20, y + 66)
     ctx.font = '400 11px monospace'; ctx.fillStyle = 'rgba(255,255,255,0.28)'
@@ -365,7 +425,7 @@ function drawBudgetCanvas(
     ctx.font = '500 11px Arial'; ctx.fillStyle = 'rgba(255,255,255,0.38)'
     ctx.fillText('Vencimiento: día 10 de cada mes', W - 20, y + 70)
     ctx.font = '500 10px Arial'; ctx.fillStyle = 'rgba(0,212,232,0.7)'
-    ctx.fillText('TNA 38,9%', W - 20, y + 88)
+    ctx.fillText('TNA ' + pct(line.tna), W - 20, y + 88)
     ctx.textAlign = 'left'; y += boxH
 
     // Breakdown strip
@@ -390,11 +450,13 @@ function drawBudgetCanvas(
 
     // Detail rows
     const rows = [
+      ['Línea de crédito', line.nombre],
       ['Capital financiado', fp(capital) + ' (' + fu(capital / tc) + ')'],
       ['Precio de lista', fp(precioARS) + ' (' + fu(model.precio_usd) + ')'],
       ['Patentamiento', fp(patentamientoARS) + ' (' + fu(model.patentamiento_usd) + ')'],
-      ['TNA / TEA / CFTEA', '38,9% / 46,64% / 58,68%'],
+      ['TNA', pct(line.tna)],
       ['Plazo', cuotas + ' meses'],
+      ...(quebrantoPct ? [['Quebranto (bonif. tasa)', fp(quebrantoMonto) + ' (' + pct(quebrantoPct) + ')']] : []),
       ['Total a pagar', fp(totalGeneral) + ' (' + fu(totalGeneral / tc) + ')'],
       ['Tipo de cambio blue', '$ ' + tc.toLocaleString('es-AR') + ' / USD'],
     ]
@@ -585,6 +647,7 @@ export default function Home() {
   const [blueLoading, setBlueLoading] = useState(false)
   const [model, setModel] = useState<Model | null>(null)
   const [activeColor, setActiveColor] = useState<Color | null>(null)
+  const [linea, setLinea] = useState<CreditLine>(CREDIT_LINES[0])
   const [capital, setCapital] = useState('')
   const [cuotas, setCuotas] = useState(24)
   const [showWA, setShowWA] = useState(false)
@@ -608,13 +671,18 @@ export default function Home() {
     setActiveColor(m.colores.find(c => c.imgKey === m.defaultImg) || m.colores[0])
   }
 
+  const onLineaChange = (l: CreditLine) => {
+    setLinea(l)
+    if (!l.plazos.includes(cuotas)) setCuotas(l.plazos.includes(24) ? 24 : l.plazos[0])
+  }
+
   const capitalNum = parseFloat(capital.replace(/\./g, '').replace(',', '.')) || 0
   const hasResult = model && capitalNum > 0
 
   const generateCanvas = () => {
     if (!model || !canvasRef.current) return
     const imgKey = activeColor?.imgKey || model.defaultImg
-    drawBudgetCanvas(canvasRef.current, model, capitalNum, cuotas, blue || 0, activeColor, imgKey)
+    drawBudgetCanvas(canvasRef.current, model, capitalNum, cuotas, blue || 0, activeColor, imgKey, linea)
   }
 
   const openPreview = () => {
@@ -638,13 +706,15 @@ export default function Home() {
   const doSendWA = (phone: string) => {
     if (!model) return
     const tc = blue || 0
-    const cuotaBase = calcBase(capitalNum, cuotas)
+    const cuotaBase = calcBase(capitalNum, cuotas, linea.tna)
     const interesTotal = cuotaBase * cuotas - capitalNum
     const ivaXCuota = (interesTotal * IVA) / cuotas
     const seguroXCuota = capitalNum * SEGURO
     const cuotaTotal = cuotaBase + ivaXCuota + seguroXCuota
     const fecha = new Date().toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' })
     const colorStr = activeColor?.name || 'A confirmar'
+    const quebrantoPct = linea.quebranto?.[cuotas]
+    const quebrantoLine = quebrantoPct ? `• Quebranto: *${fp(capitalNum * quebrantoPct)}* (${pct(quebrantoPct)}, no incl. IVA/IIBB)\n` : ''
 
     const msg =
       `🚗 *COTIZACIÓN FORMAL BYD ARGENTINA*\n` +
@@ -654,12 +724,14 @@ export default function Home() {
       `🎨 *Color:* ${colorStr}\n` +
       `💵 *Precio de lista:* ${fp(model.precio_usd * tc)} (${fu(model.precio_usd)})\n` +
       `💱 *TC Blue:* $ ${tc.toLocaleString('es-AR')} / USD\n\n` +
-      `🏦 *CONDICIONES DEL CRÉDITO*\n` +
+      `🏦 *CONDICIONES DEL CRÉDITO — ${linea.nombre}*\n` +
       `• Capital: *${fp(capitalNum)}* (≈ ${fu(capitalNum / tc)})\n` +
-      `• TNA: 38,9%  |  Plazo: ${cuotas} meses\n` +
+      `• TNA: ${pct(linea.tna)}  |  Plazo: ${cuotas} meses\n` +
+      quebrantoLine +
       `• Vencimiento de cuota: *día 10 de cada mes*\n` +
-      `*Cuota total: ${fp(cuotaTotal)}*\n\n` +
-      `*Esta cotización NO incluye el seguro del vehículo.*\n\n` +
+      `*Cuota ${linea.uva ? 'inicial' : 'total'}: ${fp(cuotaTotal)}*\n` +
+      (linea.uva ? `_Cuota indexada por UVA: se ajusta mensualmente según el coeficiente UVA (BCRA)._\n` : '') +
+      `\n*Esta cotización NO incluye el seguro del vehículo.*\n\n` +
       `✅ *Validez: 30 días*\n` +
       `_Los valores están sujetos a modificación según valor del dólar._\n` +
       `_Sujeto a aprobación crediticia. Sin gastos de otorgamiento._\n\n` +
@@ -715,9 +787,9 @@ export default function Home() {
       {/* Chips */}
       <div className="grid grid-cols-3 gap-2 mb-5">
         {[
-          { label: 'TNA', val: '38,9%', hi: true },
-          { label: 'Moneda crédito', val: 'Pesos $', hi: false },
-          { label: 'Hasta', val: '60 cuotas', hi: false },
+          { label: 'TNA', val: pct(linea.tna), hi: true },
+          { label: 'Moneda crédito', val: linea.uva ? 'Pesos (UVA)' : 'Pesos $', hi: false },
+          { label: 'Hasta', val: `${Math.max(...linea.plazos)} cuotas`, hi: false },
         ].map(c => (
           <div key={c.label} className="glass rounded-xl py-2 px-3 text-center">
             <div className="text-[10px] text-white/30 uppercase tracking-widest mb-1">{c.label}</div>
@@ -725,6 +797,9 @@ export default function Home() {
           </div>
         ))}
       </div>
+
+      {/* Linea de credito selector */}
+      <LineaSelector selected={linea} onChange={onLineaChange} />
 
       {/* Model selector */}
       <ModelSelector selected={model} onChange={onModelChange} />
@@ -772,11 +847,11 @@ export default function Home() {
       </div>
 
       {/* Cuotas */}
-      <CuotasGrid selected={cuotas} onChange={setCuotas} />
+      <CuotasGrid selected={cuotas} onChange={setCuotas} opts={linea.plazos} />
 
       {/* Result */}
       {hasResult && (
-        <ResultCard model={model} capital={capitalNum} cuotas={cuotas} blue={blue} activeColor={activeColor} />
+        <ResultCard model={model} capital={capitalNum} cuotas={cuotas} blue={blue} activeColor={activeColor} line={linea} />
       )}
 
       {/* Action buttons */}
@@ -803,7 +878,7 @@ export default function Home() {
 
       {/* Disclaimer */}
       <div className="text-center text-[10px] text-white/20 leading-relaxed mt-6 px-2">
-        Cotización a modo de referencia. Crédito en pesos · TNA 38,9% · TEA 46,64% · CFTEA 58,68%<br />
+        Cotización a modo de referencia. {linea.nombre} · TNA {pct(linea.tna)}{linea.uva ? ' (indexada UVA)' : ''}<br />
         Sistema francés · IVA 21% s/ intereses · Seguro vida/desempleo incluido<br />
         Sujeto a aprobación crediticia
       </div>
