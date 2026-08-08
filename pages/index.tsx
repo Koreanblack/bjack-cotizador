@@ -655,6 +655,13 @@ function PreviewModal({ visible, canvasRef, onClose, onDownload, onWA }: {
         <div className="rounded-xl overflow-hidden mb-4">
           <canvas ref={canvasRef} className="w-full block" />
         </div>
+        <button
+          onClick={onClose}
+          className="w-full py-3 rounded-xl font-semibold text-sm text-white/70 flex items-center justify-center gap-2 mb-3 transition-all hover:text-white"
+          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)' }}
+        >
+          ← Volver
+        </button>
         <div className="grid grid-cols-2 gap-3">
           <button onClick={onDownload} className="py-3 rounded-xl font-bold text-sm text-navy transition-opacity hover:opacity-85" style={{ background: '#00d4e8', color: '#0a0f1e' }}>
             ⬇ Descargar JPG
