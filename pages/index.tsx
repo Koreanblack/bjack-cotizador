@@ -256,7 +256,7 @@ function ResultCard({ model, capital, cuotas, blue, activeColor, line }: {
     { label: 'TNA', val: pct(line.tna) },
     { label: 'Plazo', val: `${cuotas} meses` },
     { label: 'Vencimiento', val: 'Día 10 de cada mes' },
-    ...(quebrantoPct ? [{ label: 'Quebranto (bonif. tasa)', val: `${fp(quebrantoMonto)} (${pct(quebrantoPct)} + IVA, no incl. IIBB)` }] : []),
+    ...(quebrantoPct ? [{ label: 'Quebranto (bonif. tasa)', val: `${fp(quebrantoMonto)} (${pct(quebrantoPct)} + IVA)` }] : []),
     { label: 'Costo de prenda', val: `${fp(costoPrenda)} (${pct(COSTO_PRENDA)})` },
     { label: 'Total a pagar', val: tc > 0 ? `${fp(totalGeneral)} (${fu(totalGeneral / tc)})` : fp(totalGeneral) },
     { label: 'Tipo de cambio blue', val: tc > 0 ? `$ ${tc.toLocaleString('es-AR')} / USD` : 'No disponible' },
@@ -732,7 +732,7 @@ export default function Home() {
     const fecha = new Date().toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' })
     const colorStr = activeColor?.name || 'A confirmar'
     const quebrantoPct = linea.quebranto?.[cuotas]
-    const quebrantoLine = quebrantoPct ? `• Quebranto: *${fp(capitalNum * quebrantoPct * (1 + IVA))}* (${pct(quebrantoPct)} + IVA, no incl. IIBB)\n` : ''
+    const quebrantoLine = quebrantoPct ? `• Quebranto: *${fp(capitalNum * quebrantoPct * (1 + IVA))}* (${pct(quebrantoPct)} + IVA)\n` : ''
     const costoPrenda = capitalNum * COSTO_PRENDA
 
     const msg =
