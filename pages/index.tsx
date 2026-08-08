@@ -240,19 +240,21 @@ function ResultCard({ model, capital, cuotas, blue, activeColor, line }: {
   const ivaXCuota = (interesTotal * IVA) / cuotas
   const seguroXCuota = capital * SEGURO
   const cuotaTotal = cuotaBase + ivaXCuota + seguroXCuota
-  const totalGeneral = cuotaTotal * cuotas
   const precioARS = model.precio_usd * tc
   const patentamientoARS = model.patentamiento_usd * tc
   const quebrantoPct = line.quebranto?.[cuotas]
   const quebrantoBase = quebrantoPct ? capital * quebrantoPct : 0
   const quebrantoMonto = quebrantoBase * (1 + IVA)
   const costoPrenda = capital * COSTO_PRENDA
+  const anticipo = tc > 0 ? Math.max(0, precioARS - capital) : 0
+  const totalGeneral = cuotaTotal * cuotas + anticipo + quebrantoMonto + costoPrenda
 
   const rows = [
     { label: 'Línea de crédito', val: line.nombre },
     { label: 'Vehículo', val: tc > 0 ? `${fp(precioARS)} (${fu(model.precio_usd)})` : fu(model.precio_usd) },
     { label: 'Patentamiento', val: tc > 0 ? `${fp(patentamientoARS)} (${fu(model.patentamiento_usd)})` : fu(model.patentamiento_usd) },
     { label: 'Capital financiado', val: tc > 0 ? `${fp(capital)} (${fu(capital / tc)})` : fp(capital) },
+    ...(tc > 0 ? [{ label: 'Anticipo', val: `${fp(anticipo)} (${fu(anticipo / tc)})` }] : []),
     { label: 'TNA', val: pct(line.tna) },
     { label: 'Plazo', val: `${cuotas} meses` },
     { label: 'Vencimiento', val: 'Día 10 de cada mes' },
@@ -339,13 +341,14 @@ function drawBudgetCanvas(
   const ivaXCuota = (interesTotal * IVA) / cuotas
   const seguroXCuota = capital * SEGURO
   const cuotaTotal = cuotaBase + ivaXCuota + seguroXCuota
-  const totalGeneral = cuotaTotal * cuotas
   const precioARS = model.precio_usd * tc
   const patentamientoARS = model.patentamiento_usd * tc
   const quebrantoPct = line.quebranto?.[cuotas]
   const quebrantoBase = quebrantoPct ? capital * quebrantoPct : 0
   const quebrantoMonto = quebrantoBase * (1 + IVA)
   const costoPrenda = capital * COSTO_PRENDA
+  const anticipo = Math.max(0, precioARS - capital)
+  const totalGeneral = cuotaTotal * cuotas + anticipo + quebrantoMonto + costoPrenda
 
   // BG
   const bg = ctx.createLinearGradient(0, 0, 0, H)
@@ -467,6 +470,7 @@ function drawBudgetCanvas(
     const rows = [
       ['Línea de crédito', line.nombre],
       ['Capital financiado', fp(capital) + ' (' + fu(capital / tc) + ')'],
+      ['Anticipo', fp(anticipo) + ' (' + fu(anticipo / tc) + ')'],
       ['Precio de lista', fp(precioARS) + ' (' + fu(model.precio_usd) + ')'],
       ['Patentamiento', fp(patentamientoARS) + ' (' + fu(model.patentamiento_usd) + ')'],
       ['TNA', pct(line.tna)],
@@ -739,8 +743,11 @@ export default function Home() {
     const fecha = new Date().toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' })
     const colorStr = activeColor?.name || 'A confirmar'
     const quebrantoPct = linea.quebranto?.[cuotas]
-    const quebrantoLine = quebrantoPct ? `• Quebranto: *${fp(capitalNum * quebrantoPct * (1 + IVA))}* (${pct(quebrantoPct)} + IVA)\n` : ''
+    const quebrantoMonto = quebrantoPct ? capitalNum * quebrantoPct * (1 + IVA) : 0
+    const quebrantoLine = quebrantoPct ? `• Quebranto: *${fp(quebrantoMonto)}* (${pct(quebrantoPct)} + IVA)\n` : ''
     const costoPrenda = capitalNum * COSTO_PRENDA
+    const anticipo = tc > 0 ? Math.max(0, model.precio_usd * tc - capitalNum) : 0
+    const totalGeneral = cuotaTotal * cuotas + anticipo + quebrantoMonto + costoPrenda
 
     const msg =
       `🚗 *COTIZACIÓN FORMAL BYD ARGENTINA*\n` +
@@ -752,11 +759,13 @@ export default function Home() {
       `💱 *TC Blue:* $ ${tc.toLocaleString('es-AR')} / USD\n\n` +
       `🏦 *CONDICIONES DEL CRÉDITO — ${linea.nombre}*\n` +
       `• Capital: *${fp(capitalNum)}* (≈ ${fu(capitalNum / tc)})\n` +
+      (tc > 0 ? `• Anticipo: *${fp(anticipo)}* (≈ ${fu(anticipo / tc)})\n` : '') +
       `• TNA: ${pct(linea.tna)}  |  Plazo: ${cuotas} meses\n` +
       quebrantoLine +
       `• Costo de prenda: *${fp(costoPrenda)}* (${pct(COSTO_PRENDA)})\n` +
       `• Vencimiento de cuota: *día 10 de cada mes*\n` +
       `*Cuota ${linea.uva ? 'inicial' : 'total'}: ${fp(cuotaTotal)}*\n` +
+      `*Total a pagar: ${tc > 0 ? fp(totalGeneral) + ' (' + fu(totalGeneral / tc) + ')' : fp(totalGeneral)}*\n` +
       (linea.uva ? `_Cuota indexada por UVA: se ajusta mensualmente según el coeficiente UVA (BCRA)._\n` : '') +
       `\n*Esta cotización NO incluye el seguro del vehículo.*\n\n` +
       `✅ *Validez: 30 días*\n` +
