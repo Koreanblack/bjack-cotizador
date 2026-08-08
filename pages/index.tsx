@@ -4,7 +4,6 @@ import { IMAGES } from '../lib/images'
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 const IVA = 0.21
-const SEGURO = 0.0022965
 const COSTO_PRENDA = 0.015
 
 export interface CreditLine {
@@ -238,8 +237,7 @@ function ResultCard({ model, capital, cuotas, blue, activeColor, line }: {
   const cuotaBase = calcBase(capital, cuotas, line.tna)
   const interesTotal = cuotaBase * cuotas - capital
   const ivaXCuota = (interesTotal * IVA) / cuotas
-  const seguroXCuota = capital * SEGURO
-  const cuotaTotal = cuotaBase + ivaXCuota + seguroXCuota
+  const cuotaTotal = cuotaBase + ivaXCuota
   const precioARS = model.precio_usd * tc
   const patentamientoARS = model.patentamiento_usd * tc
   const quebrantoPct = line.quebranto?.[cuotas]
@@ -274,11 +272,10 @@ function ResultCard({ model, capital, cuotas, blue, activeColor, line }: {
         {tc > 0 && <div className="font-mono text-xs text-white/30 mt-1.5">≈ {fu(cuotaTotal / tc)}</div>}
 
         {/* Breakdown strip */}
-        <div className="grid grid-cols-3 gap-0 mt-4 rounded-lg overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+        <div className="grid grid-cols-2 gap-0 mt-4 rounded-lg overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
           {[
             { label: 'Capital', val: fp(cuotaBase), color: 'text-white/60' },
             { label: 'IVA 21%', val: fp(ivaXCuota), color: 'text-yellow-300/80' },
-            { label: 'Seguro', val: fp(seguroXCuota), color: 'text-purple-300/80' },
           ].map((item, i) => (
             <div key={i} className={`py-2.5 px-2 text-center ${i > 0 ? 'border-l border-white/7' : ''}`}>
               <div className="text-[9px] uppercase tracking-wider text-white/30 mb-1">{item.label}</div>
@@ -289,7 +286,7 @@ function ResultCard({ model, capital, cuotas, blue, activeColor, line }: {
 
         <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between">
           <span className="text-[11px] text-white/30">{cuotas} cuotas · TNA {pct(line.tna)}</span>
-          <span className="text-[11px] text-[#00d4e8] bg-[rgba(0,212,232,0.08)] border border-[rgba(0,212,232,0.2)] rounded-full px-2.5 py-0.5 font-mono">IVA + Seguro incl.</span>
+          <span className="text-[11px] text-[#00d4e8] bg-[rgba(0,212,232,0.08)] border border-[rgba(0,212,232,0.2)] rounded-full px-2.5 py-0.5 font-mono">IVA incl.</span>
         </div>
       </div>
 
@@ -339,8 +336,7 @@ function drawBudgetCanvas(
   const cuotaBase = calcBase(capital, cuotas, line.tna)
   const interesTotal = cuotaBase * cuotas - capital
   const ivaXCuota = (interesTotal * IVA) / cuotas
-  const seguroXCuota = capital * SEGURO
-  const cuotaTotal = cuotaBase + ivaXCuota + seguroXCuota
+  const cuotaTotal = cuotaBase + ivaXCuota
   const precioARS = model.precio_usd * tc
   const patentamientoARS = model.patentamiento_usd * tc
   const quebrantoPct = line.quebranto?.[cuotas]
@@ -450,9 +446,8 @@ function drawBudgetCanvas(
     const bItems = [
       { label: 'Capital/cuota', val: fp(cuotaBase), color: 'rgba(255,255,255,0.65)' },
       { label: 'IVA 21%', val: fp(ivaXCuota), color: 'rgba(255,220,80,0.85)' },
-      { label: 'Seguro', val: fp(seguroXCuota), color: 'rgba(180,160,255,0.85)' },
     ]
-    const bW = W / 3
+    const bW = W / 2
     bItems.forEach((it, i) => {
       ctx.fillStyle = i % 2 === 0 ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0)'
       ctx.fillRect(i * bW, y, bW, 42)
@@ -738,8 +733,7 @@ export default function Home() {
     const cuotaBase = calcBase(capitalNum, cuotas, linea.tna)
     const interesTotal = cuotaBase * cuotas - capitalNum
     const ivaXCuota = (interesTotal * IVA) / cuotas
-    const seguroXCuota = capitalNum * SEGURO
-    const cuotaTotal = cuotaBase + ivaXCuota + seguroXCuota
+    const cuotaTotal = cuotaBase + ivaXCuota
     const fecha = new Date().toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' })
     const colorStr = activeColor?.name || 'A confirmar'
     const quebrantoPct = linea.quebranto?.[cuotas]
@@ -907,7 +901,7 @@ export default function Home() {
       {/* Disclaimer */}
       <div className="text-center text-[10px] text-white/20 leading-relaxed mt-6 px-2">
         Cotización a modo de referencia. {linea.nombre} · TNA {pct(linea.tna)}{linea.uva ? ' (indexada UVA)' : ''}<br />
-        Sistema francés · IVA 21% s/ intereses · Seguro vida/desempleo incluido<br />
+        Sistema francés · IVA 21% s/ intereses<br />
         Sujeto a aprobación crediticia
       </div>
 
